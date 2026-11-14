@@ -1,0 +1,10 @@
+# D2-01: Kontrollü arıza. compose-cluster.yml üzerine bindirilir, yalnızca kafka-2'yi değiştirir.
+# Başlatmak için: ./lab.sh up D2-01 --broken
+name: kafka-labs
+
+services:
+  kafka-2:
+    environment:
+      # TODO D2-01-1: Aşağıdaki satırda EXTERNAL listener yanlış. Host'taki client bu adresi çözemez.
+      #   Slayt 37'deki tabloya bakarak kafka-2'nin host'tan erişilen adresini yaz.
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-2:19092,EXTERNAL://kafka-2:19092

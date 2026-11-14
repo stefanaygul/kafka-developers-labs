@@ -1,0 +1,10 @@
+# D2-03 ve D2-06 ayarları.
+spring:
+  kafka:
+    consumer:
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+    listener:
+      # acknowledge() çağrıldığı anda commit eder. Varsayılan BATCH, poll bitince commit ederdi.
+      ack-mode: manual_immediate

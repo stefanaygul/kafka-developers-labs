@@ -1,0 +1,14 @@
+# D2-04 ayarları. Bu profilde PostgreSQL gerekmez.
+spring:
+  kafka:
+    consumer:
+      # TODO D2-04-3: Bozuk bayt poll sırasında patlar ve listener'a hiç ulaşmaz. Bu deserializer'ı
+      #   ErrorHandlingDeserializer ile sarmala; JsonDeserializer'ı delegate olarak ver (slayt 50).
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+app:
+  retry-group: order-payment
+  notification-topic: order-notifications
+  notification-group: order-notification

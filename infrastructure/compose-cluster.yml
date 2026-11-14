@@ -1,0 +1,111 @@
+# 3 broker'li KRaft cluster'i. Slayt 37 ve 38 ile aynı topoloji.
+# Host'tan:          localhost:9092, localhost:9094, localhost:9096
+# Docker ağının içinden: kafka-1:19092, kafka-2:19092, kafka-3:19092
+# Controller:        kafka-N:9093 (dışarıya açılmaz)
+name: kafka-labs
+
+x-kafka-common: &kafka-common
+  image: apache/kafka:4.3.2
+  restart: "no"
+  stop_grace_period: 30s
+
+x-kafka-env: &kafka-env
+  KAFKA_PROCESS_ROLES: broker,controller
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+  KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+  KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+  KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093
+  KAFKA_LOG_DIRS: /var/lib/kafka/data
+  CLUSTER_ID: 4L6g3nShT-eMCtK--X86sw
+  KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+  KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+  KAFKA_HEAP_OPTS: -Xms256m -Xmx768m
+
+services:
+  kafka-1:
+    <<: *kafka-common
+    container_name: kafka-1
+    hostname: kafka-1
+    ports:
+      - "9092:9092"
+    environment:
+      <<: *kafka-env
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENERS: INTERNAL://:19092,EXTERNAL://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-1:19092,EXTERNAL://localhost:9092
+    volumes:
+      - kafka-1-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka-1:19092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 15s
+      retries: 12
+      start_period: 15s
+
+  kafka-2:
+    <<: *kafka-common
+    container_name: kafka-2
+    hostname: kafka-2
+    ports:
+      - "9094:9094"
+    environment:
+      <<: *kafka-env
+      KAFKA_NODE_ID: 2
+      KAFKA_LISTENERS: INTERNAL://:19092,EXTERNAL://:9094,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-2:19092,EXTERNAL://localhost:9094
+    volumes:
+      - kafka-2-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka-2:19092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 15s
+      retries: 12
+      start_period: 15s
+
+  kafka-3:
+    <<: *kafka-common
+    container_name: kafka-3
+    hostname: kafka-3
+    ports:
+      - "9096:9096"
+    environment:
+      <<: *kafka-env
+      KAFKA_NODE_ID: 3
+      KAFKA_LISTENERS: INTERNAL://:19092,EXTERNAL://:9096,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-3:19092,EXTERNAL://localhost:9096
+    volumes:
+      - kafka-3-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka-3:19092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 15s
+      retries: 12
+      start_period: 15s
+
+  postgres:
+    image: postgres:17.11-alpine
+    container_name: orders-postgres
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: orders
+    ports:
+      - "${POSTGRES_PORT:-15432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init/postgres-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orders -d orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  kafka-1-data:
+  kafka-2-data:
+  kafka-3-data:
+  postgres-data:

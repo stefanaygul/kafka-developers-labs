@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "Order",
+  "namespace": "com.shop",
+  "fields": [
+    {"name": "orderId", "type": "string"},
+    {"name": "customerId", "type": "string"},
+    {"name": "amount", "type": "double"}
+    // TODO D3-02-3: currency adında string bir alan ekle, default değeri "TRY" olsun (slayt 79).
+    //   Önceki satırın sonuna virgül koymayı unutma.
+  ]
+}

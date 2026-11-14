@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: order-processor
+  main:
+    web-application-type: none
+  profiles:
+    # idempotency: D2-03 ve D2-06. retry: D2-04.
+    default: idempotency
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT:15432}/orders
+    username: orders
+    password: orders
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9094,localhost:9096
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        # Crash olan consumer bu süre dolana kadar grupta kayıtlı kalır. Varsayılan 45 sn (slayt 55);
+        # sınıfta beklememek için kısaltıldı.
+        session.timeout.ms: 10000
+        spring.json.trusted.packages: com.example.orders
+        spring.json.value.default.type: com.example.orders.OrderEvent
+
+app:
+  topic: orders
+  group: order-processor-db
+  instance: A
+  crash-marker-dir: ${java.io.tmpdir}/order-processor-crash
+
+logging:
+  level:
+    org.apache.kafka.clients.NetworkClient: ERROR
+    org.apache.kafka.clients.consumer.ConsumerConfig: WARN
+    org.apache.kafka.clients.producer.ProducerConfig: WARN

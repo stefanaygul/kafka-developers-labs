@@ -1,0 +1,8 @@
+# D2-01: Kontrollü arıza. compose-cluster.yml üzerine bindirilir, yalnızca kafka-2'yi değiştirir.
+# Başlatmak için: ./lab.sh up D2-01 --broken
+name: kafka-labs
+
+services:
+  kafka-2:
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-2:19092,EXTERNAL://localhost:9094

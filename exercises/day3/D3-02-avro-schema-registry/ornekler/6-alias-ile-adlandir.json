@@ -1,0 +1,1 @@
+{"schema": "{\"type\":\"record\",\"name\":\"Order\",\"namespace\":\"com.shop\",\"fields\":[{\"name\":\"orderId\",\"type\":\"string\"},{\"name\":\"buyerId\",\"type\":\"string\",\"aliases\":[\"customerId\"]},{\"name\":\"amount\",\"type\":\"double\"},{\"name\":\"currency\",\"type\":\"string\",\"default\":\"TRY\"}]}"}

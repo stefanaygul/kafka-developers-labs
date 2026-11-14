@@ -1,0 +1,29 @@
+server:
+  port: ${ORDER_AVRO_PORT:8084}
+
+spring:
+  application:
+    name: order-avro
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9094,localhost:9096
+    # TODO D3-02-1: Slayt 78'i uygula. spring.kafka.properties altına schema.registry.url
+    #   (http://localhost:${SCHEMA_REGISTRY_PORT:8081}), specific.avro.reader ve auto.register.schemas
+    #   ayarlarını ekle. Producer value-serializer ve consumer value-deserializer olarak Confluent'in
+    #   Avro sınıflarını ver. Bu iki ayarın yerleri aşağıda işaretli.
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # value-serializer: buraya
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # value-deserializer: buraya
+
+app:
+  # JSON ve Avro kayıtları karışmasın diye ayrı topic.
+  topic: orders-avro
+  group: order-avro-reader
+
+logging:
+  level:
+    org.apache.kafka.clients: WARN
+    io.confluent: WARN

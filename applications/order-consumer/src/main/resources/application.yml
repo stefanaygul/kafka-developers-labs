@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: order-consumer
+  main:
+    web-application-type: none
+  kafka:
+    # TODO D1-04-3: bootstrap-servers değerini üç broker'ın host adresleriyle doldur (slayt 32).
+    bootstrap-servers:
+    consumer:
+      # TODO D1-04-4: group-id değerini order-processor yap (slayt 33).
+      group-id:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # Bozuk kayıt tüketimi kilitlemesin. Ayrıntısı D2-04'te.
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: com.example.orders
+        # Console producer ile yazılan kayıtlarda tip header'ı yoktur.
+        spring.json.value.default.type: com.example.orders.OrderEvent
+
+app:
+  topic: orders
+  instance: A
+  slow-ms: 0
+
+logging:
+  level:
+    org.apache.kafka.clients.NetworkClient: ERROR
+    org.apache.kafka.clients.consumer.ConsumerConfig: WARN

@@ -1,0 +1,61 @@
+# Schema Registry. compose-cluster.yml ile birlikte kullanılır:
+#   docker compose -f compose-cluster.yml -f compose-schema.yml up -d
+# Host portu 8081 doluysa SCHEMA_REGISTRY_PORT ile değiştirilir.
+name: kafka-labs
+
+services:
+  schema-registry:
+    image: confluentinc/cp-schema-registry:8.3.2
+    container_name: schema-registry
+    hostname: schema-registry
+    depends_on:
+      kafka-1: { condition: service_healthy }
+      kafka-2: { condition: service_healthy }
+      kafka-3: { condition: service_healthy }
+    ports:
+      - "${SCHEMA_REGISTRY_PORT:-8081}:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:19092,PLAINTEXT://kafka-2:19092,PLAINTEXT://kafka-3:19092
+      SCHEMA_REGISTRY_SCHEMA_COMPATIBILITY_LEVEL: BACKWARD
+      SCHEMA_REGISTRY_HEAP_OPTS: -Xms128m -Xmx384m
+    healthcheck:
+      # İmajda curl yok: bash ile gerçek bir HTTP istegi atılır.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8081 && printf 'GET /subjects HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  # Opsiyonel: exercises/optional. Slaytlarda genel bakış düzeyinde.
+  ksqldb-server:
+    image: confluentinc/cp-ksqldb-server:8.3.2
+    container_name: ksqldb-server
+    hostname: ksqldb-server
+    profiles: ["optional"]
+    depends_on:
+      schema-registry: { condition: service_healthy }
+    ports:
+      - "8088:8088"
+    environment:
+      KSQL_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
+      KSQL_LISTENERS: http://0.0.0.0:8088
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KSQL_KSQL_SERVICE_ID: orders_ksql_
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+
+  # Opsiyonel: Kafka Connect worker. Dosya connector'ı Apache Kafka ile gelir.
+  connect:
+    image: apache/kafka:4.3.2
+    container_name: connect
+    hostname: connect
+    profiles: ["optional"]
+    depends_on:
+      kafka-1: { condition: service_healthy }
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./connect-distributed.properties:/mnt/connect/connect-distributed.properties:ro
+    command: ["/opt/kafka/bin/connect-distributed.sh", "/mnt/connect/connect-distributed.properties"]
